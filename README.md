@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# Slots Demo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + Vite + TypeScript demo slot machine. This is a front-end-only demo:
+there is no backend, no wallet, and no real-money logic.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run format
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Reel Animation
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The spin flow is driven by the Zustand store in `src/store/slotStore.ts`.
+When Spin is clicked, the store:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. Checks the demo balance.
+2. Deducts the bet immediately.
+3. Generates the final reel result.
+4. Marks all reels as spinning.
+5. Stops reels one by one from left to right.
+6. Enters a short "Checking wins..." phase.
+7. Calculates wins and applies payouts.
+
+The visual reel movement is CSS-based in `src/styles/index.css`. Each spinning
+reel shows a fast vertical symbol strip with a small blur. When the reel stops,
+the final generated symbols are revealed without changing the grid dimensions.
+
+## Spin Speed
+
+Spin timings live in `src/data/animationConfig.ts`.
+
+- `spinTimings.normal` controls the cinematic mode.
+- `spinTimings.turbo` controls the faster turbo mode.
+- `reelStopBaseMs` is the first reel stop delay.
+- `reelStopStaggerMs` controls the left-to-right stop spacing.
+- `checkingDelayMs` controls how long "Checking wins..." is shown.
+- `reelCycleMs` controls how fast the CSS reel strip loops.
+
+The app also uses `prefers-reduced-motion` to shorten spin timing and remove
+most motion for users who request reduced motion.
+
+## Win Highlights
+
+Winning symbol glow and reel blur styles are located in `src/styles/index.css`.
+The animated payline SVG is rendered by `src/components/effects/PaylineOverlay.tsx`.
+The total win display is `src/components/ui/WinPanel.tsx`, and large payouts open
+`src/components/effects/BigWinOverlay.tsx`.
+
+## Assets
+
+Symbol data lives in `src/data/symbols.ts`. Each symbol has an `imagePath` that
+points at `src/assets/symbols` plus a fallback emoji. Missing image files do not
+break the app; the symbol component falls back to the emoji.
