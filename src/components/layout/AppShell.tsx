@@ -38,7 +38,7 @@ export function AppShell() {
 
               <div className="space-y-3">
                 <p className="text-xs font-black uppercase tracking-[0.34em] text-fuchsia-200/80 sm:text-sm">
-                  Modern Demo Slot
+                  слоты с приколом от creativeprostor
                 </p>
                 <h1 className="casino-title text-balance text-5xl font-black uppercase tracking-normal text-amber-100 sm:text-7xl lg:text-8xl">
                   ЗАКЛАДКИНГ
