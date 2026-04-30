@@ -18,10 +18,9 @@ import { PaytableModal } from '../../components/ui/PaytableModal'
 import { WinPanel } from '../../components/ui/WinPanel'
 import { getSpinTiming } from '../../data/animationConfig'
 import { paylines } from '../../data/paylines'
-import { useAudioSettings } from '../../hooks/useAudioSettings'
 import { useSlotStore } from '../../store/slotStore'
-import { audioManager, playSound } from '../../utils/audioManager'
 import { cn } from '../../utils/cn'
+import { playButtonClick } from '../../utils/soundManager'
 import { getWinningPositionKeys } from '../../utils/slotMath'
 import { Reel } from './Reel'
 
@@ -29,15 +28,6 @@ export function SlotMachine() {
   const [isPaytableOpen, setIsPaytableOpen] = useState(false)
   const [isAutoLit, setIsAutoLit] = useState(false)
   const prefersReducedMotion = useReducedMotion()
-  const {
-    enabled: soundEnabled,
-    volume,
-    ambientEnabled,
-    unlockAudio,
-    setSoundEnabled,
-    setVolume,
-    setAmbientEnabled,
-  } = useAudioSettings()
   const {
     balance,
     bet,
@@ -50,6 +40,7 @@ export function SlotMachine() {
     lastWinAmount,
     totalWin,
     spinMode,
+    soundEnabled,
     status,
     statusMessage,
     showBigWin,
@@ -58,6 +49,7 @@ export function SlotMachine() {
     decreaseBet,
     setMaxBet,
     setSpinMode,
+    toggleSound,
     spin,
   } = useSlotStore()
   const canSpin = balance >= bet && !isSpinning
@@ -72,10 +64,7 @@ export function SlotMachine() {
 
   return (
     <>
-      <div
-        className="slot-cabinet w-full max-w-5xl rounded-lg p-3 sm:p-5"
-        onPointerDown={unlockAudio}
-      >
+      <div className="slot-cabinet w-full max-w-5xl rounded-lg p-3 sm:p-5">
         <div className="slot-frame relative rounded-lg p-2 sm:p-4">
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
           <div className="relative rounded-lg border border-black/50 bg-[#08050b] p-2 shadow-inner shadow-black sm:p-4">
@@ -142,10 +131,7 @@ export function SlotMachine() {
                 <Repeat className="h-4 w-4 text-fuchsia-200" aria-hidden="true" />
                 ПОД ЛСД
               </TextButton>
-              <TextButton
-                active={soundEnabled}
-                onClick={() => setSoundEnabled(!soundEnabled)}
-              >
+              <TextButton active={soundEnabled} onClick={toggleSound}>
                 {soundEnabled ? (
                   <Volume2 className="h-4 w-4 text-emerald-200" aria-hidden="true" />
                 ) : (
@@ -153,30 +139,11 @@ export function SlotMachine() {
                 )}
                 {soundEnabled ? 'ЗВУК ВКЛ' : 'ЗВУК ВЫКЛ'}
               </TextButton>
-              <TextButton
-                active={ambientEnabled}
-                onClick={() => setAmbientEnabled(!ambientEnabled)}
-              >
-                Фон
-              </TextButton>
               <TextButton onClick={() => setIsPaytableOpen(true)}>
                 <ReceiptText className="h-4 w-4 text-emerald-200" aria-hidden="true" />В
                 ИТОГЕ
               </TextButton>
             </div>
-
-            <label className="mt-3 grid gap-2 text-left text-xs font-black uppercase tracking-[0.14em] text-stone-400 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-              <span>Громкость</span>
-              <input
-                className="casino-volume-slider"
-                type="range"
-                min="0"
-                max="100"
-                value={Math.round(volume * 100)}
-                onChange={(event) => setVolume(Number(event.target.value) / 100)}
-              />
-              <span className="text-amber-100">{Math.round(volume * 100)}%</span>
-            </label>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-[1fr_auto] lg:grid-cols-1">
@@ -293,8 +260,7 @@ function TextButton({ children, active, disabled, onClick }: ButtonProps) {
 }
 
 function handleToolClick(callback: () => void) {
-  audioManager.unlock()
-  playSound('buttonClick')
+  playButtonClick(useSlotStore.getState().soundEnabled)
   callback()
 }
 

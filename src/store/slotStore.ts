@@ -14,7 +14,14 @@ import {
   generateSpinResult,
   REEL_COUNT,
 } from '../utils/slotMath'
-import { playSound, stopSound } from '../utils/audioManager'
+import {
+  playButtonClick,
+  playJackpot,
+  playReelStop,
+  playSpinStart,
+  playWinBig,
+  playWinSmall,
+} from '../utils/soundManager'
 
 type SpinOptions = {
   prefersReducedMotion?: boolean
@@ -32,6 +39,7 @@ type SlotState = {
   lastWinAmount: number
   totalWin: number
   spinMode: SpinMode
+  soundEnabled: boolean
   status: SpinStatus
   statusMessage: string
   showBigWin: boolean
@@ -40,6 +48,7 @@ type SlotState = {
   decreaseBet: () => void
   setMaxBet: () => void
   setSpinMode: (mode: SpinMode) => void
+  toggleSound: () => void
   dismissBigWin: () => void
   spin: (options?: SpinOptions) => void
 }
@@ -67,6 +76,7 @@ export const useSlotStore = create<SlotState>((set, get) => ({
   lastWinAmount: 0,
   totalWin: 0,
   spinMode: 'normal',
+  soundEnabled: true,
   status: 'ready',
   statusMessage: 'Ready',
   showBigWin: false,
@@ -89,13 +99,16 @@ export const useSlotStore = create<SlotState>((set, get) => ({
   setSpinMode: (mode) => {
     set({ spinMode: mode })
   },
+  toggleSound: () => {
+    set((state) => ({ soundEnabled: !state.soundEnabled }))
+  },
   dismissBigWin: () => {
     set({ showBigWin: false })
   },
   spin: (options) => {
-    const { balance, bet, isSpinning, spinMode } = get()
+    const { balance, bet, isSpinning, spinMode, soundEnabled } = get()
 
-    playSound('buttonClick')
+    playButtonClick(soundEnabled)
 
     if (isSpinning) {
       return
@@ -109,7 +122,6 @@ export const useSlotStore = create<SlotState>((set, get) => ({
         lastWin: [],
         showBigWin: false,
       })
-      playSound('error')
       return
     }
 
@@ -123,8 +135,7 @@ export const useSlotStore = create<SlotState>((set, get) => ({
 
     console.log('result generated')
 
-    playSound('spinStart')
-    playSound('spinLoop')
+    playSpinStart(soundEnabled)
 
     set({
       balance: Math.max(0, balance - bet),
@@ -166,7 +177,7 @@ export const useSlotStore = create<SlotState>((set, get) => ({
 
             return { reels, spinningReels }
           })
-          playSound('reelStop')
+          playReelStop(get().soundEnabled)
         },
         getReelStopDelay(reelIndex, spinMode, prefersReducedMotion),
       )
@@ -191,20 +202,8 @@ export const useSlotStore = create<SlotState>((set, get) => ({
       const wins = calculateWins(resultReels, bet)
       const payout = applyPayout(balanceBeforeSpin, bet, wins)
       const isBigWin = payout.totalWin >= bet * bigWinMultiplier
-      const hasBonusSymbol = resultReels.some((reel) =>
-        reel.symbols.some((symbol) => {
-          return symbol.id === 'key' || symbol.id === 'scatter'
-        }),
-      )
-
-      stopSound('spinLoop')
-
       if (payout.totalWin > 0) {
-        playSound(getWinSound(payout.totalWin, bet, isBigWin))
-      }
-
-      if (hasBonusSymbol) {
-        playSound('bonus')
+        playWinSound(payout.totalWin, bet, isBigWin, get().soundEnabled)
       }
 
       set((state) => ({
@@ -225,14 +224,21 @@ export const useSlotStore = create<SlotState>((set, get) => ({
   },
 }))
 
-function getWinSound(totalWin: number, bet: number, isBigWin: boolean) {
+function playWinSound(
+  totalWin: number,
+  bet: number,
+  isBigWin: boolean,
+  soundEnabled: boolean,
+) {
   if (isBigWin) {
-    return 'bigWin'
+    playJackpot(soundEnabled)
+    return
   }
 
   if (totalWin >= bet * 12) {
-    return 'mediumWin'
+    playWinBig(soundEnabled)
+    return
   }
 
-  return 'smallWin'
+  playWinSmall(soundEnabled)
 }
