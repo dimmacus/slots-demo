@@ -96,7 +96,7 @@ export function SlotMachine() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2 text-left sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-1.5 text-left sm:mt-4 sm:gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="БАЛАНС" value={formatCredits(balance)} tone="gold" />
           <Stat label="СТАВКА" value={formatCredits(bet)} tone="purple" />
           <Stat label="ВЫБИТО" value={formatCredits(lastWinAmount)} tone="green" />
